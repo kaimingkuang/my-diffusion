@@ -1,0 +1,32 @@
+device: "cuda:0"
+
+data:
+    dataset_cls: MNIST
+    root: ./data
+    mean: 0.5
+    std: 0.5
+    target_size: [112, 112]
+
+model:
+    n_steps: 1000
+    min_beta: 1e-4
+    max_beta: 0.02
+    in_dims: 1
+    first_dims: 64
+    first_kernel: 7
+    first_pad: 3
+    time_pos_embed_dims: 64
+    time_mlp_dims: 256
+    down_channels: [64, 128, 256]
+    up_channels: [256, 128, 64]
+    out_dims: 1
+
+training:
+    batch_size: 32
+    n_workers: 4
+    n_epochs: 1500
+    lr: 2e-4
+
+eval:
+    batch_size: 16
+    n_batches: 1
