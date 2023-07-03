@@ -4,6 +4,8 @@ from datetime import datetime
 import cv2
 import numpy as np
 import torch
+import wandb
+from omegaconf import OmegaConf
 from torch import nn, optim
 from torch.utils.data import DataLoader
 from torchvision import datasets
@@ -89,9 +91,6 @@ class Trainer:
 
             avg_loss += loss.detach().cpu().item()
 
-            if i >= 5:
-                break
-
         avg_loss /= len(self.dl_train)
 
         return avg_loss
@@ -109,9 +108,6 @@ class Trainer:
             loss = self.criterion(noise_outputs, noise_targets)
 
             avg_loss += loss.cpu().item()
-
-            if i >= 5:
-                break
 
         avg_loss /= len(self.dl_val)
 
@@ -145,6 +141,15 @@ class Trainer:
         return fid_score
 
     def train(self):
+        self.start_time = datetime.now().strftime("%Y%m%d-%H%M%S")
+        wandb_cfg = OmegaConf.load("wandb_cfg.yaml")
+        wandb.login(key=wandb_cfg.key)
+        wandb.init(
+            project="my-diffusion",
+            name=self.start_time,
+            config=self.cfg
+        )
+
         for i in range(self.cfg.training.n_epochs):
             self.epoch_idx = i
             loss_train = self._train_epoch()
@@ -152,6 +157,15 @@ class Trainer:
             loss_val = self._val_epoch()
 
             fid_score = self._eval_on_samples()
+
+            wandb.log({
+                "loss/train": loss_train,
+                "loss/val": loss_val,
+                "FID": fid_score,
+                "epoch": i
+            })
+
+        wandb.finish()
 
 
 if __name__ == "__main__":
@@ -163,4 +177,3 @@ if __name__ == "__main__":
     # print(1)
     feats = np.random.normal(size=(4, 3))
     print(np.cov(feats.T))
-    print((feats - feats.mean(axis=0, keepdims=True)).T @ (feats - feats.mean(axis=0, keepdims=True)) / 3)

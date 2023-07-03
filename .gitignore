@@ -163,3 +163,5 @@ data/
 .vscode/
 scripts/
 logs/
+wandb/
+wandb_cfg.yaml
